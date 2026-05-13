@@ -11,11 +11,18 @@ The CLV-3D is designed around the IKEA METOD modular kitchen system, providing a
 - [UTRUSTA Shelf (Black-grey)](https://www.ikea.com/gb/en/p/utrusta-shelf-black-grey-10591785/)
 - [HÅLLBAR Bin with lid (Light grey)](https://www.ikea.com/gb/en/p/hallbar-bin-with-lid-light-grey-20420203/)
 - [UTRUSTA Hinge w b-in damper](https://www.ikea.com/gb/en/p/utrusta-hinge-w-b-in-damper-for-kitchen-80524882/)
+- [UTRUSTA Hinge w b-in damper (110°)](https://www.ikea.com/gb/en/p/utrusta-hinge-w-b-in-damper-for-kitchen-10427262/)
 - 4x [METOD Leg](https://www.ikea.com/gb/en/p/metod-leg-70556067/)
 
 ### Upper Section (Filtration & Housing)
 - 2x [METOD Fridge/freezer top cabinet frame (60x60x40 cm)](https://www.ikea.com/gb/en/p/metod-fridge-freezer-top-cabinet-frame-black-grey-70591706/)
 - [MÖCKLERYD Worktop (White laminate)](https://www.ikea.com/gb/en/p/moeckleryd-worktop-white-laminate-60582180/)
+
+### Drawers & Storage
+- [KNIVSHULT Drawer low (Dark grey)](https://www.ikea.com/gb/en/p/knivshult-drawer-low-dark-grey-80600668/) (For Form 4, rated for weight)
+- [KNIVSHULT Drawer medium (Dark grey)](https://www.ikea.com/gb/en/p/knivshult-drawer-medium-dark-grey-30600675/) (For consumables)
+- [KNIVSHULT Drawer front low (Dark grey)](https://www.ikea.com/gb/en/p/knivshult-drawer-front-low-dark-grey-50600702/)
+- [KNIVSHULT Drawer front medium (Dark grey)](https://www.ikea.com/gb/en/p/knivshult-drawer-front-medium-dark-grey-80600705/)
 
 ---
 
