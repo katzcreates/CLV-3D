@@ -28,12 +28,11 @@ The system consists of four wireless nodes communicating via ESP-NOW:
 
 ## Project Structure
 
-- `firmware/`: Production firmware for all four nodes.
-- `Wireless Firmware/`: Alternative wireless-focused firmware branch.
+- `firmware/`: Production firmware for all four nodes (includes local `common/` protocol).
+- `Wireless Firmware/`: Alternative branch (includes local `common/` protocol).
 - `Calibration/`: Utility scripts for sensor and pressure calibration.
 - `3D Printing Files/`: Scaled STL files for all custom brackets, mounts, and sensor housings.
 - `Cut Enclosure Pieces/`: DXF/Design files for laser-cut acrylic and MDF panels.
-- `common/`: Shared protocol headers used by all firmware nodes.
 
 ---
 
