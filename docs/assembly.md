@@ -10,8 +10,8 @@ The CLV-3D is designed around the IKEA METOD modular kitchen system, providing a
 - [FÖRBÄTTRA Plinth (Dark grey)](https://www.ikea.com/gb/en/p/foerbaettra-plinth-dark-grey-80454110/)
 - [UTRUSTA Shelf (Black-grey)](https://www.ikea.com/gb/en/p/utrusta-shelf-black-grey-10591785/)
 - [HÅLLBAR Bin with lid (Light grey)](https://www.ikea.com/gb/en/p/hallbar-bin-with-lid-light-grey-20420203/)
-- [UTRUSTA Hinge w b-in damper](https://www.ikea.com/gb/en/p/utrusta-hinge-w-b-in-damper-for-kitchen-80524882/)
-- [UTRUSTA Hinge w b-in damper (110°)](https://www.ikea.com/gb/en/p/utrusta-hinge-w-b-in-damper-for-kitchen-10427262/)
+- [UTRUSTA Hinge w b-in damper (110°)](https://www.ikea.com/gb/en/p/utrusta-hinge-w-b-in-damper-for-kitchen-80524882/)
+- [UTRUSTA Hinge w b-in damper (153°)](https://www.ikea.com/gb/en/p/utrusta-hinge-w-b-in-damper-for-kitchen-10427262/)
 - 4x [METOD Leg](https://www.ikea.com/gb/en/p/metod-leg-70556067/)
 
 ### Upper Section (Filtration & Housing)
