@@ -7,7 +7,7 @@ A custom-built, sensor-driven ventilation enclosure designed for the safe operat
 The CLV-3D is a multifunctional enclosure that addresses fume management and particulate filtration without requiring external exhaust. It features a high-volume recirculating airflow loop, real-time air quality monitoring, and autonomous fan control.
 
 ### Key Features
-- **Recirculating Airflow**: Multi-pass filtration using G4 pre-filters and industrial carbon beds.
+- **Recirculating Airflow**: Multi-pass filtration using G4 pre-filters and high-capacity carbon filters.
 - **Distributed Sensor Network**: 4-node ESP-NOW system monitoring Internal, External, Plenum, and Filter environments.
 - **Autonomous Control**: Fan speed scales automatically based on VOC (IAQ) and Particulate Matter (PM2.5) levels.
 - **Smart Idle & Self-Healing**: Adaptive power management to extend sensor life and unified baseline calibration to prevent sensor drift.
