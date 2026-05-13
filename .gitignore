@@ -1,0 +1,23 @@
+# Folders to Exclude
+3D Model References/
+3D Printing Files/Archive/
+
+# Obsidian/Internal Documentation
+Form 4 Cabinet.md
+Form 4 Cabinet Script.md
+
+# Build Artifacts & Temporary Files
+*/build/
+*/bin/
+*/obj/
+.pio/
+.vscode/
+*.log
+
+# Python Caches
+__pycache__/
+*.pyc
+
+# OS Specific
+.DS_Store
+Thumbs.db
