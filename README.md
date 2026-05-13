@@ -1,10 +1,10 @@
-# Form 4 Cabinet: Recirculating Ventilation & Monitoring System
+# CLV-3D: Closed Loop Ventilation Enclosure
 
-A custom-built, sensor-driven ventilation enclosure designed for the safe operation of resin 3D printers (optimized for the Formlabs Form 4) in confined workshops.
+A custom-built, sensor-driven ventilation enclosure designed for the safe operation of resin 3D printers in confined workshops.
 
 ## Overview
 
-The Form 4 Cabinet is a multifunctional enclosure that addresses fume management and particulate filtration without requiring external exhaust. It features a high-volume recirculating airflow loop, real-time air quality monitoring, and autonomous fan control.
+The CLV-3D is a multifunctional enclosure that addresses fume management and particulate filtration without requiring external exhaust. It features a high-volume recirculating airflow loop, real-time air quality monitoring, and autonomous fan control.
 
 ### Key Features
 - **Recirculating Airflow**: Multi-pass filtration using G4 pre-filters and industrial carbon beds.
