@@ -9,7 +9,7 @@ The CLV-3D is a multifunctional enclosure that addresses fume management and par
 ### Key Features
 - **Recirculating Airflow**: Multi-pass filtration using G4 pre-filters and high-capacity carbon filters.
 - **Distributed Sensor Network**: 4-node ESP-NOW system monitoring Internal, External, Plenum, and Filter environments.
-- **Autonomous Control**: Fan speed scales automatically based on VOC (IAQ) and Particulate Matter (PM2.5) levels.
+- **Autonomous Control**: Fan speed scales automatically based on VOC (IAQ) and Particulate Matter (PM2.5 and PM10) levels.
 - **Smart Idle & Self-Healing**: Adaptive power management to extend sensor life and unified baseline calibration to prevent sensor drift.
 - **Integrated Display**: Real-time dashboard showing system health, filter status, and environment telemetry.
 
@@ -19,10 +19,10 @@ The CLV-3D is a multifunctional enclosure that addresses fume management and par
 
 The system consists of four wireless nodes communicating via ESP-NOW:
 
-1.  **Node 1 (Hub)**: Main display and interface (Unexpected Maker Feather S2 + 2.4" TFT).
-2.  **Node 2 (Sensor Stack)**: Main control logic, fan driver (DAC), and internal sensors (QTPY ESP32-S3).
-3.  **Node 3 (Filter Monitor)**: Monitors pressure after the G4 filters to detect clogging (QTPY ESP32-S3).
-4.  **Node 4 (External Monitor)**: Reference node for room-air ground truth (QTPY ESP32-S3).
+1.  **Node 1 (Hub)**: Main display and interface
+2.  **Node 2 (Sensor Stack)**: Main control logic, fan driver (DAC), and internal sensors
+3.  **Node 3 (Filter Monitor)**: Monitors pressure after the G4 filters to detect clogging
+4.  **Node 4 (External Monitor)**: Reference node for room-air quality
 
 ---
 
@@ -40,9 +40,12 @@ The system consists of four wireless nodes communicating via ESP-NOW:
 ## Setup & Installation
 
 ### Hardware Requirements
+
+Listed below are the components I used, however, the only real requirements for the MCUs are that they are ESP32 type boards. Alternate boards and display can be used, though 3D files will need adjustments.
+
 - **MCUs**: 1x Feather S2, 3x QTPY ESP32-S3.
 - **Sensors**: 4x BME680 (I2C), 2x PMSA0031 (I2C).
-- **Fan**: Rhino Ultra 150 EC (or any 0-10V controllable EC fan).
+- **Display**: Adafruit 2.4" TFT FeatherWing (any small display will do)
 - **Control**: GP8413 I2C DAC for 0-10V signal.
 
 ### Firmware Setup
