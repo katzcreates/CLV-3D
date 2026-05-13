@@ -135,7 +135,7 @@ The BME680 sensors automatically handle their own calibration via the **Unified 
 
 Flash each node with its respective `.ino` file from the `firmware/` directory.
 
-###Wireless Firmware Instructions Coming Soon
+### Wireless Firmware Instructions Coming Soon
 
 ---
 ## Enclosure Assembly
