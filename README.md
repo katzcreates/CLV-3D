@@ -163,7 +163,8 @@ The BME680 sensors automatically handle calibration via Unified Self-Healing log
 
 ### Build Notes
 
-> [!TIP] **Gravity & Alignment**
+> [!TIP]
+> **Gravity & Alignment**
 > Real-world assembly often differs from CAD models due to mounting tolerances and "cabinet sag." It is highly recommended to complete the physical frame assembly and measure the specific "as-built" openings before cutting your final acrylic panels.
 
 ---
@@ -190,7 +191,8 @@ The BME680 sensors automatically handle calibration via Unified Self-Healing log
 2. **Idle Mode**: Duty-cycles the laser (30s every 10m).
 3. **Deep Sleep**: OFF if the shop is empty for >24 hours.
 
-> [!NOTE] **PMSA0031 Hardware Upgrade**
+> [!NOTE]
+> **PMSA0031 Hardware Upgrade**
 > Enabling the 10-year tiers requires a physical connection to the sensor's **SET pin**.
 
 ---
