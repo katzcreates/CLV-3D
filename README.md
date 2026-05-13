@@ -7,6 +7,7 @@ A custom-built, sensor-driven ventilation enclosure designed for the safe operat
 The CLV-3D is a multifunctional enclosure that addresses fume management and particulate filtration without requiring external exhaust. It features a high-volume recirculating airflow loop, real-time air quality monitoring, and autonomous fan control.
 
 ### Key Features
+
 - **Recirculating Airflow**: Multi-pass filtration using G4 pre-filters and high-capacity carbon filters.
 - **Distributed Sensor Network**: 4-node ESP-NOW system monitoring Internal, External, Plenum, and Filter environments.
 - **Autonomous Control**: Fan speed scales automatically based on VOC (IAQ) and Particulate Matter (PM2.5 and PM10) levels.
@@ -19,10 +20,10 @@ The CLV-3D is a multifunctional enclosure that addresses fume management and par
 
 The system consists of four wireless nodes communicating via ESP-NOW:
 
-1.  **Node 1 (Hub)**: Main display and interface
-2.  **Node 2 (Sensor Stack)**: Main control logic, fan driver (DAC), and internal sensors
-3.  **Node 4 (External Monitor)**: Reference node for room-air quality
-4.  **Node 3 (Filter Monitor)**: Monitors pressure after the G4 filters to detect clogging
+1. **Node 1 (Hub)**: Main display and interface
+2. **Node 2 (Sensor Stack)**: Main control logic, fan driver (DAC), and internal sensors
+3. **Node 4 (External Monitor)**: Reference node for room-air quality
+4. **Node 3 (Filter Monitor)**: Monitors pressure after the G4 filters to detect clogging
 
 ---
 
@@ -41,12 +42,14 @@ The system consists of four wireless nodes communicating via ESP-NOW:
 The components listed below are what I used for the original build. However, the system is flexible—any ESP32-type boards will work, though alternate boards or displays may require physical adjustments to the 3D printed housings.
 
 ### Electronics
+
 - **MCUs**: 1x Feather S2, 3x QTPY ESP32-S3.
 - **Sensors**: 4x BME680 (I2C), 2x PMSA0031 (I2C).
 - **Display**: Adafruit 2.4" TFT FeatherWing (any small SPI display can be adapted).
 - **Control**: GP8413 I2C DAC for 0-10V fan control.
 
 ### Ventilation
+
 These are the exact pieces I used for my filtration setup. The design is optimized for these, and if using alternatives, I recommend 6"/150mm sized peripherals.
 
 - **Fan**: [Rhino Ultra Fan (150mm / 6" Non-Silenced)](https://rhinofilter.com/products/rhino-ultra-non-silenced-fan/)
@@ -57,10 +60,11 @@ These are the exact pieces I used for my filtration setup. The design is optimiz
 
 ## Cabinetry & Enclosure
 
-The CLV-3D is designed to be built using standard IKEA METOD cabinetry as a foundation. 
+The CLV-3D is designed to be built using standard IKEA METOD cabinetry as a foundation.
 
 ### IKEA Parts List
-These are the exact pieces used to build the base cabinetry as seen in my project video and in the 3D mockup. 
+
+These are the exact pieces used to build the base cabinetry as seen in my project video and in the 3D mockup.
 
 - **Lower Section**:
   - 2x [METOD Base cabinet frame (60x60x80 cm)](https://www.ikea.com/gb/en/p/metod-base-cabinet-frame-black-grey-60591702/)
@@ -84,14 +88,16 @@ These are the exact pieces used to build the base cabinetry as seen in my projec
 
 If you are using the same base furniture, you can refer to the `Cut Enclosure Pieces/` folder for DXF files for the exact pieces of acrylic and MDF that require custom shapes. For those in the UK, I recommend [CutMy.co.uk](https://cutmy.co.uk/) for well-priced, custom-cut materials.
 
-**3mm Clear Acrylic**
+#### 3mm Clear Acrylic
+
 | Dimensions (mm) | Qty | Shape | File / Notes |
 | :--- | :--- | :--- | :--- |
 | 1200 x 297 | 1 | Rectangle | |
 | 664 x 793 | 2 | Custom (Upload) | `AcrylicSide_FinalFix.dxf` |
 | 600 x 495 | 2 | Rectangle | |
 
-**3mm Medite Premier MDF**
+#### 3mm Medite Premier MDF
+
 | Dimensions (mm) | Qty | Shape | File / Notes |
 | :--- | :--- | :--- | :--- |
 | 1194 x 797 | 1 | Custom (Upload) | `Backsplash_FinalFix.dxf` |
@@ -102,31 +108,39 @@ If you are using the same base furniture, you can refer to the `Cut Enclosure Pi
 
 ## Firmware Setup
 
-#### 1. Firmware Requirements & Libraries
+### 1. Firmware Requirements & Libraries
+
 Ensure the following libraries are installed in the Arduino IDE:
+
 - **Adafruit_BME680**: For Temp/Hum/Pressure/VOC sensors.
 - **Adafruit_PM25AQI**: For the PMSA0031 particulate sensor.
 - **Adafruit_ILI9341**: For the 2.4" TFT display.
 - **Adafruit_GFX**: Core graphics library.
 - **Adafruit_STMPE610**: For the resistive touch screen.
 
-#### 2. Identify MAC Addresses
+### 2. Identify MAC Addresses
+
 To enable ESP-NOW communication, you need the MAC addresses of your boards:
+
 1. Upload a simple "Get MAC" sketch to the boards to find their addresses.
 2. Update the `hubAddress` in Node 2 and Node 4 to match Node 1.
 3. Update `node2Address` in Node 3 to match Node 2.
 
-#### 3. Pressure & Filter Calibration
+### 3. Pressure & Filter Calibration
+
 Before final operation, run the scripts in `Calibration/` to ensure accurate mechanical clogging alerts for the G4 pre-filter.
 
-##### Calibration Process
+#### Calibration Process
+
 1. Open the Serial Monitor for Node 2 (115200 baud) running `PressureCalibration.ino`.
 2. The script will cycle the fan from 0% to 100%.
 3. **Capture the Tare**: Record the `RawDiff` value at **0%** fan speed. Update `G4_FILTER_TARE_OFFSET` in your Node 2 firmware with this value.
 4. **Capture the Clean Baseline**: Verify the `FinalDrop` at **80%** (typically 3.0 to 5.0 Pa for clean filters).
 
-#### 4. VOC & IAQ Calibration (Self-Healing)
+### 4. VOC & IAQ Calibration (Self-Healing)
+
 The BME680 sensors automatically handle calibration via Unified Self-Healing logic.
+
 - **First-Run Sync**: Leave the cabinet idle in a clean room for **15-20 minutes** on first power-up to allow the baseline to stabilize.
 - **Autosave**: Calibration progress is saved to flash every **5 minutes**.
 
@@ -135,6 +149,7 @@ The BME680 sensors automatically handle calibration via Unified Self-Healing log
 ## Assembly & Build Notes
 
 ### Enclosure Assembly
+
 1. **Upper/Wall Cabinets**: Install wall cabinets and secure to wall.
 2. **Base Cabinets**: Assemble METOD base cabinets and test placement.
 3. **Internal Prep**: Cut airflow holes in the back of the lower cabinet and countertop.
@@ -148,6 +163,7 @@ The BME680 sensors automatically handle calibration via Unified Self-Healing log
 11. **Electronics**: Integrate the ESP32-S3 nodes and sensor suite.
 
 ### Build Notes
+
 > [!TIP] **Gravity & Alignment**
 > Real-world assembly often differs from CAD models due to mounting tolerances and "cabinet sag." It is highly recommended to complete the physical frame assembly and measure the specific "as-built" openings before cutting your final acrylic panels.
 
@@ -161,6 +177,7 @@ The BME680 sensors automatically handle calibration via Unified Self-Healing log
 | `!! REPLACE CARBON !!` | Low VOC removal efficiency. | Flip or replace the carbon filter. |
 
 ### Component Lifespan Expectations
+
 | Component | Life Expectancy | Maintenance Type |
 | :--- | :--- | :--- |
 | **BME680 (VOC)** | 5 - 10 Years | Self-calibrating via firmware nudges. |
@@ -169,7 +186,7 @@ The BME680 sensors automatically handle calibration via Unified Self-Healing log
 | **Carbon Filter** | ~18-24 Mo (Flip) | Replace after ~3 years total or when alerts persist. |
 
 ### Smart Power Management (PM Sensor)
-To prevent laser burnout, the system uses three power tiers:
+
 1. **Active Mode**: Laser is ON for instant response.
 2. **Idle Mode**: Duty-cycles the laser (30s every 10m).
 3. **Deep Sleep**: OFF if the shop is empty for >24 hours.
@@ -180,4 +197,5 @@ To prevent laser burnout, the system uses three power tiers:
 ---
 
 ## License & Credits
+
 Designed by Katz Creates. This project is shared for educational and hobbyist use.
