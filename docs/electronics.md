@@ -52,6 +52,25 @@ graph TD
 | SDA/SCL | PMSA0031 (PM) | I2C | STEMMA QT |
 | SDA/SCL | DAC 2 Unit (GP8413) | I2C (0x59) | V0 (Channel 0) for 0-10V Fan Control |
 
+### Node 3: Filter Monitor (QTPY S3)
+
+| Pin | Component | Interface | Note |
+| :--- | :--- | :--- | :--- |
+| SDA/SCL | BME680 (Filter) | I2C | STEMMA QT |
+
+### Node 4: External Monitor (QTPY S3)
+
+| Pin | Component | Interface | Note |
+| :--- | :--- | :--- | :--- |
+| SDA/SCL | BME680 (External) | I2C | STEMMA QT |
+| SDA/SCL | PMSA0031 (PM External) | I2C | STEMMA QT |
+
+### Hardware Configuration Notes
+
+- **Communication**: ESP-NOW eliminates the need for data cables between nodes. Each node acts as a wireless station.
+- **Fan Control**: The GP8413 provides a 0-10V analog signal from **Channel 0 (V0)** to the Rhino Ultra 150 EC fan.
+- **Initialization**: Firmware initializes the DAC to a 10V range by writing `0x11` to register `0x01` on startup.
+
 ---
 
 ## Control Logic
@@ -100,3 +119,14 @@ To prevent the "Normalization Trap"—where sensors in clean, filtered air drift
   - **Print Guard (150 IAQ Ceiling)**: Downward nudging is automatically locked out if IAQ exceeds 150.0. This ensures the system never "zeros out" actual resin fumes during a print.
   - **Room Reference Gate**: Node 2 will only nudge downward if it has proof (from Node 4) that the room air is cleaner than the cabinet.
 - **Persistence (5-Minute Checkpoints)**: The system checkpoints its calibration progress to the ESP32 Non-Volatile Storage (NVS) every **5 minutes**. This ensures that even during a "Rapid Climb" (first power-up), the board never loses more than 5 minutes of progress after a power cycle.
+
+---
+
+## Hub User Interface
+
+The Hub (Node 1) provides the primary interface for monitoring system health and air quality.
+
+- **Display**: 320x240 Landscape mode with dual-page touch navigation (Dashboard vs. System Status).
+- **Diagnostics**: Real-time Node RSSI (dBm) and heartbeat indicators for all wireless sensors.
+- **Alerting**: High-visibility headers for critical maintenance (`REPLACE G4` in Red, `REPLACE CARBON` in Orange).
+- **Power Management**: Backlight automatically dims after 5 minutes of inactivity and turns off after 15 minutes. Wake-on-touch is supported.
