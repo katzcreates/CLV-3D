@@ -92,9 +92,9 @@ If you are using the same base furniture, you can refer to the `Cut Enclosure Pi
 
 | Dimensions (mm) | Qty | Shape | File / Notes |
 | :--- | :--- | :--- | :--- |
-| 1200 x 297 | 1 | Rectangle | |
+| 1200 x 297 | 1 | Rectangle | Top Door |
 | 664 x 793 | 2 | Custom (Upload) | `AcrylicSide_FinalFix.dxf` |
-| 600 x 495 | 2 | Rectangle | |
+| 600 x 495 | 2 | Rectangle | Side Doors |
 
 #### 3mm Medite Premier MDF
 
@@ -102,7 +102,6 @@ If you are using the same base furniture, you can refer to the `Cut Enclosure Pi
 | :--- | :--- | :--- | :--- |
 | 1194 x 797 | 1 | Custom (Upload) | `Backsplash_FinalFix.dxf` |
 | 329 x 285 | 1 | Custom (Upload) | `FilterBlockerFix.dxf` |
-| 1194 x 50 | 1 | Rectangle | |
 
 ---
 
