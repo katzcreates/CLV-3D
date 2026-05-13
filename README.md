@@ -40,12 +40,34 @@ The system consists of four wireless nodes communicating via ESP-NOW:
 
 ## Hardware Requirements
 
-Listed below are the components I used, however, the only real requirements for the MCUs are that they are ESP32 type boards. Alternate boards and display can be used, though 3D files will need adjustments.
+The components listed below are what I used for the original build. However, the system is flexible—any ESP32-type boards will work, though alternate boards or displays may require physical adjustments to the 3D printed housings.
 
 - **MCUs**: 1x Feather S2, 3x QTPY ESP32-S3.
 - **Sensors**: 4x BME680 (I2C), 2x PMSA0031 (I2C).
-- **Display**: Adafruit 2.4" TFT FeatherWing (any small display will do)
-- **Control**: GP8413 I2C DAC for 0-10V signal.
+- **Display**: Adafruit 2.4" TFT FeatherWing (any small SPI display can be adapted).
+- **Control**: GP8413 I2C DAC for 0-10V fan control.
+
+### Cabinetry & Enclosure
+
+The CLV-3D is designed to be built using standard IKEA METOD cabinetry as a foundation. If you are using the same base furniture, you can refer to the `Cut Enclosure Pieces/` folder for DXF files for the exact pieces of acrylic and MDF that require custom shapes.
+
+#### Panel Ordering Information
+
+For those in the UK, I recommend [CutMy.co.uk](https://cutmy.co.uk/) for well-priced, custom-cut acrylic and MDF. Below is the recommended order configuration used for this project:
+
+**3mm Clear Acrylic**
+| Dimensions (mm) | Qty | Shape | File / Notes |
+| :--- | :--- | :--- | :--- |
+| 1200 x 297 | 1 | Rectangle | |
+| 664 x 793 | 2 | Custom (Upload) | `AcrylicSide_FinalFix.dxf` |
+| 600 x 495 | 2 | Rectangle | |
+
+**3mm Medite Premier MDF**
+| Dimensions (mm) | Qty | Shape | File / Notes |
+| :--- | :--- | :--- | :--- |
+| 1194 x 797 | 1 | Custom (Upload) | `Backsplash_FinalFix.dxf` |
+| 329 x 285 | 1 | Custom (Upload) | `FilterBlockerFix.dxf` |
+| 1194 x 50 | 1 | Rectangle | |
 
 ### Ventilation
 
