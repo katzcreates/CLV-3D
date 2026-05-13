@@ -77,6 +77,7 @@ These are the exact pieces used to build the base cabinetry as seen in my projec
   - [KNIVSHULT Drawer front low (Dark grey)](https://www.ikea.com/gb/en/p/knivshult-drawer-front-low-dark-grey-50600702/)
   - [KNIVSHULT Drawer front medium (Dark grey)](https://www.ikea.com/gb/en/p/knivshult-drawer-front-medium-dark-grey-80600705/)
 
+
 ## Firmware Setup
 #### 1. Firmware Requirements & Libraries
 
@@ -168,7 +169,7 @@ Flash each node with its respective `.ino` file from the `firmware/` directory.
 | `!! REPLACE G4 !!` | High pressure drop detected. | Replace the G4 pre-filters. |
 | `!! REPLACE CARBON !!` | Low VOC removal efficiency. | Flip or replace the carbon filter. |
 
-###Component Lifespan Expectations
+### Component Lifespan Expectations
 
 | Component | Life Expectancy | Maintenance Type |
 | :--- | :--- | :--- |
