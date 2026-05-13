@@ -17,8 +17,8 @@ Ensure the following libraries are installed in the Arduino IDE:
 
 To enable ESP-NOW communication, you need the MAC addresses of your boards. While your specific hardware will differ, here are the addresses used in the original build for reference:
 
-- **Node 1 (Hub)**: `84:f7:03:73:b3:7e`
-- **Node 2 (Sensor Stack)**: `d8:3b:da:8e:f7:3c`
+- **Node 1 (Hub)**: `XX:XX:XX:XX:XX:XX`
+- **Node 2 (Sensor Stack)**: `XX:XX:XX:XX:XX:XX`
 
 ### Setup Steps:
 1. Upload a "Get MAC" sketch to your boards to find their unique addresses.
