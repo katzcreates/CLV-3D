@@ -33,9 +33,13 @@ The cabinet contains two continuous VOC sources (Form Wash IPA and Form 4 resin 
 | **First Flip** | ~18–24 months | Rotate the filter 180° to bring the fresh end forward. |
 | **Full Replacement** | ~3 years total | Replace the filter entirely. |
 
-**How to interpret alerts:**
-- **Occasional alerts** (`!! REPLACE CARBON !!`) → time to flip the filter.
-- **Persistent alerts** → the carbon is saturated and needs replacement.
+**How your firmware tells you it's time:**
+- The Hub's **Carbon Alert** (`!! REPLACE CARBON !!`) fires when the Plenum VOC reading is within 50% of the Internal reading—i.e., air is passing through the carbon *without being scrubbed*.
+- **Occasional alerts** → time to flip.
+- **Persistent alerts** → time to replace.
+
+> [!TIP]
+> You don't need to track dates manually. Trust the Plenum sensor—it is measuring filter performance in real-time.
 
 ## Stability Hardening Flags
 
