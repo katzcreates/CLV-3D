@@ -9,7 +9,7 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Preferences.h>
-#include "../../common/Protocol.h"
+#include "../common/Protocol.h"
 #include "../common/WirelessConfig.h"
 
 // TFT Pins for Feather S2 + 2.4" TFT Wing

@@ -14,7 +14,7 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME680.h>
-#include "../../common/Protocol.h"
+#include "../common/Protocol.h"
 
 #define BME680_INTERNAL_ADDR 0x77
 #define BME680_PLENUM_ADDR   0x76 

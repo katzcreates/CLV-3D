@@ -4,7 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME680.h>
-#include "../../common/Protocol.h"
+#include "../common/Protocol.h"
 #include "../common/WirelessConfig.h"
 
 // I2C Address

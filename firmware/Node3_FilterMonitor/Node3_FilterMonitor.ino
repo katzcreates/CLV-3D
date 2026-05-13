@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME680.h>
-#include "../../common/Protocol.h"
+#include "../common/Protocol.h"
 
 // I2C Address
 #define BME680_FILTER_ADDR 0x77

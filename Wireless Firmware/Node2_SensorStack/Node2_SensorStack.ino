@@ -6,7 +6,7 @@
 #include <Adafruit_BME680.h>
 #include <Adafruit_PM25AQI.h>
 #include <Preferences.h>
-#include "../../common/Protocol.h"
+#include "../common/Protocol.h"
 #include "../common/WirelessConfig.h"
 
 // Forward Declaration for Compiler
