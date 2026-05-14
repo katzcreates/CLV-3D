@@ -35,6 +35,7 @@ graph TD
 ## Node Pinouts
 
 ### Node 1: Main Hub (Feather S2)
+
 | Pin | Component | Interface | Note |
 | :--- | :--- | :--- | :--- |
 | 1 | TFT_CS (LCD) | SPI | Chip Select for Display |
@@ -45,6 +46,7 @@ graph TD
 | D5 | TFT Backlight | PWM | |
 
 ### Node 2: Main Sensor Stack (QTPY S3)
+
 | Pin | Component | Interface | Note |
 | :--- | :--- | :--- | :--- |
 | SDA/SCL | BME680 (Internal) | I2C | STEMMA QT |

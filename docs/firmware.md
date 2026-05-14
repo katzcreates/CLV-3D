@@ -21,6 +21,7 @@ To enable ESP-NOW communication, you need the MAC addresses of your boards. Whil
 - **Node 2 (Sensor Stack)**: `XX:XX:XX:XX:XX:XX`
 
 ### Setup Steps:
+
 1. Upload a "Get MAC" sketch to your boards to find their unique addresses.
 2. Update the `hubAddress` in Node 2 and Node 4 to match your Node 1.
 3. Update `node2Address` in Node 3 to match your Node 2.
@@ -32,16 +33,19 @@ To enable ESP-NOW communication, you need the MAC addresses of your boards. Whil
 To ensure accurate mechanical clogging alerts for the G4 pre-filter, a baseline pressure calibration must be performed to account for sensor drift.
 
 ### Calibration Setup
+
 - **Node 3 (Filter Monitor)**: Running its standard firmware.
 - **Node 2 (Sensor Stack)**: Flashed with `PressureCalibration.ino`.
 
 ### Calibration Process
+
 1. Open the Serial Monitor for Node 2 (115200 baud).
 2. The script will cycle the fan from 0% to 100%.
 3. **Capture the Tare**: Look at the `RawDiff` value when the Fan is at **0%**. This is the natural atmospheric difference between your specific sensors.
 4. **Capture the Clean Baseline**: Look at the `FinalDrop` value when the Fan is at **80%**. For clean G4 filters, this is typically **3.0 to 5.0 Pa**.
 
 ### Updating Node 2 Firmware
+
 1. Open `Node2_SensorStack.ino`.
 2. Update `G4_FILTER_TARE_OFFSET` with your 0% `RawDiff` value (e.g., `-40.0`).
 3. Ensure `G4_ALERT_THRESHOLD` is set to `5.0`. This triggers the alert only when resistance increases significantly above the clean baseline.
