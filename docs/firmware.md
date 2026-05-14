@@ -30,7 +30,7 @@ To enable ESP-NOW communication, you need the MAC addresses of your boards. Whil
 
 ## 3. Pressure & Filter Calibration
 
-To ensure accurate mechanical clogging alerts for the G4 pre-filter, a baseline pressure calibration must be performed to account for sensor drift.
+To ensure accurate mechanical clogging alerts for the G4 pre-filter, a baseline pressure calibration must be performed using the script in `PressureCalibration/` to account for sensor drift.
 
 ### Calibration Setup
 
