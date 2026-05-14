@@ -5,6 +5,7 @@ This guide covers the technical setup for the MCUs and the critical calibration 
 ## 1. Requirements & Libraries
 
 Ensure the following libraries are installed in the Arduino IDE:
+
 - **Adafruit_BME680**: For Temp/Hum/Pressure/VOC sensors.
 - **Adafruit_PM25AQI**: For the PMSA0031 particulate sensor.
 - **Adafruit_ILI9341**: For the 2.4" TFT display.
@@ -20,7 +21,7 @@ To enable ESP-NOW communication, you need the MAC addresses of your boards. Whil
 - **Node 1 (Hub)**: `XX:XX:XX:XX:XX:XX`
 - **Node 2 (Sensor Stack)**: `XX:XX:XX:XX:XX:XX`
 
-### Setup Steps:
+### Setup Steps
 
 1. Upload a "Get MAC" sketch to your boards to find their unique addresses.
 2. Update the `hubAddress` in Node 2 and Node 4 to match your Node 1.
@@ -59,7 +60,7 @@ The BME680 sensors automatically handle their own calibration via the **Unified 
 
 - **First-Run Sync**: On initial power-up, the system may report high IAQ (80-90) or stay at 0 while the raw resistance "climbs" to match your room air.
 - **The Wait**: Simply leave the cabinet idle in a clean room for **15-20 minutes**. You will see the `Base` resistance climb in the Serial Monitor. Once the `Base` matches your room's raw resistance, local IAQ calibration is complete.
-- **Autosave**: Progress is saved to flash every **5 minutes**. 
+- **Autosave**: Progress is saved to flash every **5 minutes**.
 
 ---
 

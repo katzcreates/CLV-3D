@@ -25,7 +25,7 @@ For detailed information on how to build, program, and maintain the CLV-3D, plea
 - **[Firmware Setup & Calibration](docs/firmware.md)**: Library requirements, MAC addresses, and sensor calibration.
 - **[Maintenance & Reliability](docs/maintenance.md)**: Filter lifespan, power management, and long-term stability.
 
-#### Documentation for Wireless Firmware coming soon.
+*Documentation for Wireless Firmware coming soon.*
 
 ---
 
