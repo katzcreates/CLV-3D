@@ -45,7 +45,7 @@ The system consists of four wireless nodes communicating via ESP-NOW:
 - `firmware/`: Production firmware for all four nodes.
 - `docs/`: Detailed technical documentation and assembly guides.
 - `PressureCalibration/`: Utility script for sensor and pressure calibration.
-- `3D Printing Files/`: Scaled STL files for all custom housings.
+- `3D Printing Files/`: STL files for all custom housings.
 - `Cut Enclosure Pieces/`: DXF files for laser-cut panels.
 
 ---
