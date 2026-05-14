@@ -67,3 +67,7 @@ The BME680 sensors automatically handle their own calibration via the **Unified 
 ## 5. Final Firmware Upload
 
 Once calibration is complete, flash each node with its respective `.ino` file from the `firmware/` directory. Ensure Node 2 is flashed with its production firmware, NOT the calibration utility.
+
+---
+
+*This project is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).*

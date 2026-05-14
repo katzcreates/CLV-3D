@@ -132,3 +132,7 @@ The Hub (Node 1) provides the primary interface for monitoring system health and
 - **Diagnostics**: Real-time Node RSSI (dBm) and heartbeat indicators for all wireless sensors.
 - **Alerting**: High-visibility headers for critical maintenance (`REPLACE G4` in Red, `REPLACE CARBON` in Orange).
 - **Power Management**: Backlight automatically dims after 5 minutes of inactivity and turns off after 15 minutes. Wake-on-touch is supported.
+
+---
+
+*This project is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).*

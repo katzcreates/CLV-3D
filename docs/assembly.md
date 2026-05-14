@@ -67,3 +67,7 @@ If you are using the same IKEA base furniture, you can refer to the `Cut Enclosu
 > [!TIP]
 > **Gravity & Alignment**
 > Real-world assembly often differs from CAD models due to mounting tolerances and "cabinet sag." It is highly recommended to complete the physical frame assembly and measure the specific "as-built" openings before cutting your final acrylic panels.
+
+---
+
+*This project is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).*

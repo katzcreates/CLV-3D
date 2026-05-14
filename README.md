@@ -52,4 +52,6 @@ The system consists of four wireless nodes communicating via ESP-NOW:
 
 ## License & Credits
 
-Designed by Katz Creates. This project is shared for educational and hobbyist use.
+Designed by Katz Creates. This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**. 
+
+See the [LICENSE](LICENSE) file for the full legal text.

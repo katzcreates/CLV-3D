@@ -48,3 +48,7 @@ The firmware includes several "mathematical safety shields" to ensure decade-lon
 - **Zero-Division Shield**: Protection against crashes if IAQ reach theoretical 0.0.
 - **Baseline Sanity Caps**: VOC baselines are clamped between 10kΩ and 1,500kΩ to prevent digital "runaway."
 - **Smart-Save Flash Protection**: The ESP32 only commits calibration data to flash if a change > 1% occurs, protecting the memory chips from wear-out over time.
+
+---
+
+*This project is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).*
