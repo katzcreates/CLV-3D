@@ -34,6 +34,7 @@ The cabinet contains two continuous VOC sources (Form Wash IPA and Form 4 resin 
 | **Full Replacement** | ~3 years total | Replace the filter entirely. |
 
 **How your firmware tells you it's time:**
+
 - The Hub's **Carbon Alert** (`!! REPLACE CARBON !!`) fires when the Plenum VOC reading is within 50% of the Internal reading—i.e., air is passing through the carbon *without being scrubbed*.
 - **Occasional alerts** → time to flip.
 - **Persistent alerts** → time to replace.
