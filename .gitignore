@@ -1,5 +1,6 @@
 # Folders to Exclude
-3D Model References/
+3D Model References/*
+!3D Model References/CLV-3D Enclosure.step
 3D Printing Files/Archive/
 
 # Obsidian/Internal Documentation
