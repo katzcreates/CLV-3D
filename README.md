@@ -38,6 +38,14 @@ The system consists of four wireless nodes communicating via ESP-NOW:
 3. **Node 3 (Filter Monitor)**: Monitors pressure after the G4 filters to detect clogging.
 4. **Node 4 (External Monitor)**: Reference node for room-air quality.
 
+The as built system also features the following ventilation hardware:
+
+- **Fan**: [Rhino Ultra Fan (150mm / 6" Non-Silenced)](https://rhinofilter.com/products/rhino-ultra-non-silenced-fan/)
+- **Filter**: [AC Infinity 6" Carbon Filter](https://acinfinity.com/duct-carbon-filter-6-with-australian-charcoal/) (Intake)
+- **Pre-filtration**: 2x [G4 Pleated Panel Filter (24"x12"x1" / EU4)](https://filtersdirect.uk/product/g4-pleated-panel-filter-1-22mm-depth-eu4/)
+
+Other fans and filters can be used but adaptations to the design might be necessary to accomodate them. 
+
 ---
 
 ## Project Structure
