@@ -31,7 +31,7 @@ void saveBaselines();
 #define ADAPTIVE_THRESHOLD_MS  86400000  
 #define SNIFF_DURATION_MS      120000    
 #define BASELINE_SAVE_INTERVAL 300000    // 5 Minutes (Checkpoint Timer)
-#define IAQ_WAKE_THRESHOLD     100.0     // Wake up threshold
+#define IAQ_WAKE_THRESHOLD     55.0      // Wake up threshold (Reduced from 100 to fix stuck-at-0% issue)
 #define IAQ_IDLE_THRESHOLD     35.0      // Entry buffer (35 to enter, 55 to wake)
 #define PM_WAKE_THRESHOLD      15.0
 #define PM10_WAKE_THRESHOLD    30.0
@@ -367,7 +367,8 @@ void loop() {
 
     // 2. Detect IDLE conditions (Transitions Active -> Idle)
     if (!isSystemIdle && !isManualMode) {
-        if (smoothedIAQInternal > IAQ_IDLE_THRESHOLD) {
+        // Must be clean across ALL metrics to proceed to idle
+        if (smoothedIAQInternal > IAQ_IDLE_THRESHOLD || smoothedPM25 > 5.0 || smoothedPM10 > 10.0) {
             // Air is not clean enough to be idle; reset the timer
             lastActivityTime = millis();
         } else {
