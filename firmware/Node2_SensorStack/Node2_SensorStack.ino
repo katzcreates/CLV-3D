@@ -23,14 +23,14 @@ void saveBaselines();
 #define FILTER_ALERT_WINDOW_MS 30000 
 
 // Smart Idle & Adaptive Sniffing Constants
-#define IDLE_STABILITY_MS      1800000   // 30 Minutes
+#define IDLE_STABILITY_MS      3600000   // 1 Hour (must stay clean for a full hour)
 #define SHORT_SNIFF_INTERVAL   21600000  // 6 Hours
 #define LONG_SNIFF_INTERVAL    86400000  // 24 Hours
 #define ADAPTIVE_THRESHOLD_MS  86400000  
 #define SNIFF_DURATION_MS      120000    
 #define BASELINE_SAVE_INTERVAL 300000    // 5 Minutes (Checkpoint Timer)
-#define IAQ_WAKE_THRESHOLD     100.0     // Wake up threshold
-#define IAQ_IDLE_THRESHOLD     35.0      // Entry buffer (35 to enter, 55 to wake)
+#define IAQ_WAKE_THRESHOLD     50.0      // Wake up threshold
+#define IAQ_IDLE_THRESHOLD     10.0      // Entry buffer (Must be below 10 to start 30m timer)
 #define PM_WAKE_THRESHOLD      15.0
 #define PM10_WAKE_THRESHOLD    30.0
 
@@ -107,10 +107,13 @@ void onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int 
                 isManualMode = true;
                 manualTargetSpeed = cmd->manualSpeed;
                 manualModeStartTime = millis();
-                Serial.printf("Hub Override: Manual %d%%\n", manualTargetSpeed);
+                isSystemIdle = false;        // Interrupt Idle immediately
+                lastActivityTime = millis(); // Reset the Idle countdown
+                Serial.printf("Hub Override: Manual %d%% — Idle timer reset.\n", manualTargetSpeed);
             } else if (cmd->commandType == 0) { // Auto Mode
                 isManualMode = false;
-                Serial.println("Hub Override: Auto Mode Reverted");
+                lastActivityTime = millis(); // Start fresh 1-hour countdown
+                Serial.println("Hub Override: Auto Mode — Idle timer reset.");
             }
         }
     }
@@ -385,7 +388,9 @@ void loop() {
     if (isManualMode) {
         if (millis() - manualModeStartTime > 600000) { // 10 min auto-revert
             isManualMode = false;
-            Serial.println("Manual mode timer expired. Reverting to Smart Idle.");
+            isSystemIdle = false;        // Never jump straight back to Idle
+            lastActivityTime = millis(); // Must serve the full 1-hour countdown
+            Serial.println("Manual mode expired. Starting fresh 1-hour Idle countdown.");
         } else {
             targetSpeed = manualTargetSpeed;
         }
