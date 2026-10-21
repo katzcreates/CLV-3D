@@ -1,4 +1,4 @@
-# Electronics Design & Control Logic
+﻿# Electronics Design & Control Logic
 
 The CLV-3D system follows a distributed design using ESP-NOW for wireless communication between a main display hub, a centralized sensor stack, and dedicated environmental monitors.
 
@@ -90,11 +90,12 @@ The system operates autonomously, adjusting fan speed based on air quality and m
 
 ### 2. Adaptive "Smart Idle" Mode
 
-- **Condition**: If `Internal IAQ < 30` for > 30 minutes, the fan drops to **0% speed**.
+- **Condition**: If Internal IAQ < 10 for > 1 hour, the fan drops to **0% speed**.
 - **Adaptive Sniffing**:
   - **Standard**: 2 mins at 20% every 6 hours (if idle < 24h).
   - **Deep Sleep**: 2 mins at 20% every 24 hours (if idle > 24h).
-- **Instant Wake**: Fan resumes normal operation if `IAQ > 55` or `PM2.5 > 15`.
+- **Instant Wake**: Fan resumes active operation if IAQ > 50 or PM2.5 > 15.
+- **Manual Mode Interruption**: Entering or exiting manual fan control immediately interrupts Smart Idle and resets the 1-hour clean countdown timer.
 
 ### 3. G4 Filter Monitoring (Differential Pressure)
 
@@ -105,22 +106,23 @@ The system operates autonomously, adjusting fan speed based on air quality and m
 ### 4. Carbon Filter Efficiency Monitoring
 
 - **Method**: Comparison of VOC levels before and after the carbon bed (Internal vs. Plenum).
-- **Calculation**: `Efficiency = (VOC_in - VOC_out) / VOC_in`.
-- **Threshold**: Warning triggered if removal efficiency drops below 50% during a VOC event where Internal IAQ > 100.0 (Threshold increased to prevent ghost alerts during baseline healing).
+- **Calculation**: Efficiency = (VOC_in - VOC_out) / VOC_in.
+- **Evaluation Gate**: Gated at Internal IAQ > 75.0 to ensure a mathematically reliable signal-to-noise ratio.
+- **Two-Tier Alert System**:
+  - **Level 1 Warning (Amber CLR_WARN)**: Triggered if efficiency drops below **70%** continuously for **15 minutes**. Displays !! CHECK CARBON FILTER !!.
+  - **Level 2 Critical (Red CLR_BAD)**: Triggered if efficiency drops below **50%** continuously for **20 minutes**. Displays !! REPLACE CARBON FILTER !!.
+- **Pause Gates & True Timer Freeze**:
+  - **High Humidity Gate (>60% RH)**: High moisture temporarily clogs carbon micropores. Monitoring is frozen and the Hub displays a dedicated **Purple (CLR_PURPLE)** banner: !! HIGH HUMIDITY (>60%) - PAUSED !!.
+  - **External Event Shield (Room IAQ > 50)**: Cooking or cleaning fumes in the flat freeze carbon evaluation, preventing external spikes from triggering false filter warnings.
 
-### 5. Unified Self-Healing VOC System
+### 5. Safe Self-Healing VOC System
 
-To prevent the "Normalization Trap"—where sensors in clean, filtered air drift apart and memorize "extra-clean" as the new zero—the system uses an aggressive, multi-node synchronization strategy.
+To ensure sensors adapt to long-term hardware aging without corrupting calibration:
 
-- **The Anchor (Node 4)**: As the external reference sitting in open workshop air, Node 4 is the ultimate authority on "True Zero." It nudges its own baseline by **10%** every 5 minutes of stability to ensure it finds 0 IAQ gradually and accurately.
-- **Unified Shadow Nudging (Node 2)**:
-  - **Sync Rate**: Every 5 minutes, if the Internal IAQ is stable (±3 points) but remains higher than the Room (Node 4), the system performs a **10% gentle nudge**.
-  - **Shadowing**: To maintain accurate filter efficiency math, any nudge applied to the Internal baseline is automatically applied to the Plenum baseline in lock-step. This ensures they "heal" together and don't trigger false carbon alerts.
-- **Safety Safeguards**:
-  - **Stability Window**: A strict **±3-5 IAQ** jitter tolerance prevents standard sensor noise or fan speed changes from triggering a mathematical "healing" event prematurely.
-  - **Print Guard (150 IAQ Ceiling)**: Downward nudging is automatically locked out if IAQ exceeds 150.0. This ensures the system never "zeros out" actual resin fumes during a print.
-  - **Room Reference Gate**: Node 2 will only nudge downward if it has proof (from Node 4) that the room air is cleaner than the cabinet.
-- **Persistence (5-Minute Checkpoints)**: The system checkpoints its calibration progress to the ESP32 Non-Volatile Storage (NVS) every **5 minutes**. This ensures that even during a "Rapid Climb" (first power-up), the board never loses more than 5 minutes of progress after a power cycle.
+- **Upward Peak-Seeking**: When cleaner air is detected, baseline steps upward using a smooth EWMA filter (weight = 0.05), capped between 10kΩ and 1,500kΩ.
+- **Safe Downward Drift Ceiling (<25 IAQ)**: Downward drift is strictly locked out unless IAQ is below **25.0** for 15 minutes. This ensures resting resin or IPA vapor (typically 30–70 IAQ) is never adopted as "clean air baseline."
+- **Plenum Drift Protection**: During active airflow (>10% fan speed), if the plenum sensor drifts higher than the cabinet internal sensor by >5 IAQ, its baseline is automatically corrected.
+- **Persistence**: Baselines checkpoint to ESP32 flash (NVS) every 5 minutes when changes exceed 0.5%.
 
 ---
 
@@ -130,9 +132,12 @@ The Hub (Node 1) provides the primary interface for monitoring system health and
 
 - **Display**: 320x240 Landscape mode with dual-page touch navigation (Dashboard vs. System Status).
 - **Diagnostics**: Real-time Node RSSI (dBm) and heartbeat indicators for all wireless sensors.
-- **Alerting**: High-visibility headers for critical maintenance (`REPLACE G4` in Red, `REPLACE CARBON` in Orange).
+- **Alert Hierarchy**:
+  - **Red (CLR_BAD)**: !! CLOGGED FILTERS !!, !! REPLACE CARBON FILTER !!, !! REPLACE G4 FILTER !! (Critical maintenance).
+  - **Amber (CLR_WARN)**: !! CHECK CARBON FILTER !! (Single-pass efficiency < 70%).
+  - **Purple (CLR_PURPLE)**: !! HIGH HUMIDITY (>60%) - PAUSED !! (Moisture advisory).
+  - **Slate Blue (CLR_HEADER)**: AIR QUALITY DASHBOARD (Normal operation).
 - **Power Management**: Backlight automatically dims after 5 minutes of inactivity and turns off after 15 minutes. Wake-on-touch is supported.
 
 ---
-
 *This project is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).*

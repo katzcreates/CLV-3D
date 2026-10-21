@@ -1,4 +1,4 @@
-# Maintenance & Reliability
+﻿# Maintenance & Reliability
 
 The CLV-3D is designed for long-term industrial reliability. This guide covers sensor longevity, filter maintenance, and system stability.
 
@@ -18,7 +18,7 @@ To prevent laser burnout, the system uses three power tiers for the PMSA0031 sen
 
 1. **Active Mode (Continuous)**: Laser is 100% ON during prints, sanding, or painting for sub-second response.
 2. **Idle Mode (Duty-Cycle)**: If the room is clean for 30 minutes, the laser sleeps and wakes every 10 minutes for a 30-second "sniff."
-3. **Deep Sleep (OFF)**: If the shop is empty for >24 hours, the laser stays 100% OFF. It wakes instantly if the low-power VOC sensors detect any fumes (>100 IAQ) or if you touch the Hub.
+3. **Deep Sleep (OFF)**: If the shop is empty for >24 hours, the laser stays 100% OFF. It wakes instantly if the low-power VOC sensors detect any fumes (>50 IAQ) or if you touch the Hub.
 
 > [!NOTE]
 > **PMSA0031 Hardware Upgrade**
@@ -35,9 +35,12 @@ The cabinet contains two continuous VOC sources (Form Wash IPA and Form 4 resin 
 
 **How your firmware tells you it's time:**
 
-- The Hub's **Carbon Alert** (`!! REPLACE CARBON !!`) fires when the Plenum VOC reading is within 50% of the Internal reading—i.e., air is passing through the carbon *without being scrubbed*.
-- **Occasional alerts** → time to flip.
-- **Persistent alerts** → time to replace.
+The Hub features a two-tier carbon monitoring system:
+- **Amber Warning (!! CHECK CARBON !!)**: Fires if single-pass removal efficiency drops below **70%** for 15 minutes. This provides an early indicator that the carbon bed is beginning to slip (often on lightweight compounds like IPA).
+- **Red Alert (!! REPLACE CARBON !!)**: Fires if removal efficiency drops below **50%** for 20 minutes, indicating substantial breakthrough.
+- **Purple Advisory (!! HIGH HUMIDITY (>60%) - PAUSED !!)**: Relative humidity > 60% temporarily impairs carbon micropores. Monitoring is paused to prevent false alerts; dehumidifying the cabinet will restore optimal adsorption.
+- **Occasional Amber warnings** → time to flip (rotate the filter 180° to bring fresh carbon forward).
+- **Persistent Red alerts** → time to replace the carbon canister entirely.
 
 > [!TIP]
 > You don't need to track dates manually. Trust the Plenum sensor—it is measuring filter performance in real-time.
