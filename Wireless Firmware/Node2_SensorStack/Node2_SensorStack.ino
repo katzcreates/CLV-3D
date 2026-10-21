@@ -1,4 +1,4 @@
-#include <WiFi.h>
+﻿#include <WiFi.h>
 #include <esp_now.h>
 #include <ArduinoOTA.h>
 #include <Wire.h>
@@ -21,8 +21,15 @@ void saveBaselines();
 #define MIN_FAN_SPEED 10
 #define MAX_FAN_SPEED 80
 #define PEAK_FAN_SPEED 100
-#define CARBON_ALERT_WINDOW_MS 300000 
+#define CARBON_WARN_WINDOW_MS  900000    // 15 Minutes for Level 1 Warning (<70% eff)
+#define CARBON_ALERT_WINDOW_MS 1200000   // 20 Minutes for Level 2 Critical (<50% eff)
 #define FILTER_ALERT_WINDOW_MS 30000 
+#define CARBON_GATE_IAQ        75.0      // Minimum IAQ before efficiency is checked
+#define CARBON_WARN_THRESHOLD  0.70      // Level 1 Warning: filter removing <70% of VOCs
+#define CARBON_ALERT_THRESHOLD 0.50      // Level 2 Critical: filter removing <50% of VOCs
+#define HUMIDITY_GATE_MAX      60.0      // Maximum RH % before carbon monitoring is frozen
+#define SAFE_DRIFT_IAQ_CEILING 25.0      // Only drift down when IAQ is genuinely clean (<25)
+#define ROOM_EVENT_IAQ_GATE    50.0      // If Room VOC > 50, external event is active
 
 // Smart Idle & Adaptive Sniffing Constants
 #define IDLE_STABILITY_MS      3600000   // 1 Hour (must stay clean for a full hour)
@@ -56,7 +63,8 @@ const float gasBaselineWeight = 0.05;
 float smoothedFanSpeed = 0.0; 
 const float fanSmoothingFactor = 0.2; 
 float lastFilterPressure = 101325.0; 
-uint32_t carbonAlertStartTime = 0; 
+uint32_t carbonAlertStartTime = 0;
+uint32_t carbonWarnStartTime = 0;    // Tracks how long efficiency has been in the warning zone
 uint32_t filterAlertStartTime = 0; 
 
 // Manual Control State
@@ -111,11 +119,11 @@ void onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int 
                 manualModeStartTime = millis();
                 isSystemIdle = false;        // Interrupt Idle immediately
                 lastActivityTime = millis(); // Reset the Idle countdown
-                Serial.printf("Hub Override: Manual %d%% — Idle timer reset.\n", manualTargetSpeed);
+                Serial.printf("Hub Override: Manual %d%% â€” Idle timer reset.\n", manualTargetSpeed);
             } else if (cmd->commandType == 0) { // Auto Mode
                 isManualMode = false;
                 lastActivityTime = millis(); // Start fresh 1-hour countdown
-                Serial.println("Hub Override: Auto Mode — Idle timer reset.");
+                Serial.println("Hub Override: Auto Mode â€” Idle timer reset.");
             }
         }
     }
@@ -257,16 +265,17 @@ void loop() {
                 }
             }
         } 
-        // 2. Downward (Drift Correction): If air is stable (>10 IAQ) for 15m.
-        else if (smoothedIAQInternal > 10.0) {
-            if (abs(smoothedIAQInternal - lastDriftRef) < 10.0) { // Stable (relaxed) for 15m
+        // 2. Safe Downward Drift: ONLY if air is near-zero (5.0 to 25.0 IAQ) for 15m.
+        // Gated strictly below SAFE_DRIFT_IAQ_CEILING to prevent adopting resin/IPA fumes as baseline.
+        else if (smoothedIAQInternal > 5.0 && smoothedIAQInternal < SAFE_DRIFT_IAQ_CEILING) {
+            if (abs(smoothedIAQInternal - lastDriftRef) < 5.0) { // Stable near-clean air
                 if (millis() - lastDriftCheckTime > DRIFT_WINDOW_MS) {
-                    // Nudge baseline 10% closer to current resistance
-                    gasBaselineInternal = (gasBaselineInternal * 0.90) + (rInt * 0.10);
+                    // Nudge baseline 5% closer to current resistance (gentler to avoid overshoot)
+                    gasBaselineInternal = (gasBaselineInternal * 0.95) + (rInt * 0.05);
                     gasBaselineInternal = constrain(gasBaselineInternal, 10.0, 1500.0);
                     lastDriftCheckTime = millis();
                     saveBaselines(); // Immediate Save
-                    Serial.println(">> VOC Drift Correction: Nudging Baseline Down.");
+                    Serial.println(">> Safe VOC Drift: Nudging Baseline Down in Clean Air.");
                 }
             } else {
                 lastDriftCheckTime = millis();
@@ -293,18 +302,19 @@ void loop() {
         // UI Smoothing
         smoothedIAQPlenum = (iaqPlenum * uiSmoothingFactor) + (smoothedIAQPlenum * (1.0 - uiSmoothingFactor));
         
-        // CLAMP: Physics check. Air after the filter cannot be dirtier than air before it. 
-        if (smoothedIAQPlenum > smoothedIAQInternal) {
-            smoothedIAQPlenum = smoothedIAQInternal;
-            
-            if (smoothedIAQInternal < 50.0) {
-                // If the Plenum 'thinks' it is dirtier than the main cabinet air, it must be drifted.
-                if (smoothedIAQPlenum > (smoothedIAQInternal + 5.0)) {
-                    float rPlen = bmePlenum.gas_resistance / 1000.0;
-                    gasBaselinePlenum = (rPlen * 0.05) + (gasBaselinePlenum * 0.95);
-                }
+        // Plenum Drift Check: Under active airflow, air after filter cannot be dirtier than air before it.
+        if (smoothedFanSpeed > 10.0 && smoothedIAQInternal < 50.0) {
+            if (smoothedIAQPlenum > (smoothedIAQInternal + 5.0)) {
+                // Plenum baseline is reading artificially high/dirty; nudge gently down
+                float rPlen = bmePlenum.gas_resistance / 1000.0;
+                gasBaselinePlenum = (rPlen * 0.05) + (gasBaselinePlenum * 0.95);
+                gasBaselinePlenum = constrain(gasBaselinePlenum, 10.0, 1500.0);
             }
-        } 
+        }
+        // Display clamp: During active airflow, clamp plenum for UI consistency
+        if (smoothedFanSpeed > 10.0 && smoothedIAQPlenum > smoothedIAQInternal) {
+            smoothedIAQPlenum = smoothedIAQInternal;
+        }
         if (millis() - lastLogTime > 5000) {
             Serial.printf("Plenum  : %.1fkOhm [Base: %.1f] IAQ: %.0f (Smooth: %.0f)\n", rPlen, gasBaselinePlenum, iaqPlenum, smoothedIAQPlenum);
             lastLogTime = millis();
@@ -317,33 +327,15 @@ void loop() {
         smoothedPM10 = ((float)pmData.pm10_env * uiSmoothingFactor) + (smoothedPM10 * (1.0 - uiSmoothingFactor));
     }
 
-    // --- External Reference Sync (The Anchor) ---
-    // Every 5 minutes, if air is stable, sanity-check against Room Air (Node 4).
-    if (abs(smoothedIAQInternal - lastVocSyncRef) < 10.0) {
-        if (millis() - vocStableStartTime > 300000) { // 5 Minute Stability
-            // Unified Self-Healing: The Plenum 'shadows' the Internal's drift correction.
-            if (smoothedIAQInternal < 150.0) {
-                float roomRef = lastExternalVOC + 5.0; // Room Ref + 5pt buffer
-                
-                if (smoothedIAQInternal > roomRef) {
-                    // Pull BOTH baselines down by 10% (Gently) to maintain relative filter performance.
-                    float rIntRaw = bmeInternal.gas_resistance / 1000.0;
-                    gasBaselineInternal = (gasBaselineInternal * 0.90) + (rIntRaw * 0.10);
-                    gasBaselineInternal = constrain(gasBaselineInternal, 10.0, 1500.0);
-                    
-                    float rPlenRaw = bmePlenum.gas_resistance / 1000.0;
-                    gasBaselinePlenum = (gasBaselinePlenum * 0.90) + (rPlenRaw * 0.10);
-                    gasBaselinePlenum = constrain(gasBaselinePlenum, 10.0, 1500.0);
-
-                    Serial.printf(">> Unified System Sync: Room=%.1f\n", lastExternalVOC);
-                    saveBaselines(); // Immediate Save
-                }
-                vocStableStartTime = millis(); 
-            }
+    // --- Node 4 External Event Shield ---
+    // If the room monitor sees contaminated air (>50 IAQ), external event (cooking/cleaning) is active.
+    bool isExternalRoomEvent = (lastExternalVOC > ROOM_EVENT_IAQ_GATE);
+    if (isExternalRoomEvent) {
+        static uint32_t lastRoomLog = 0;
+        if (millis() - lastRoomLog > 60000) {
+            Serial.printf(">> External Room Event Active: Room IAQ=%.0f (Carbon monitor shielded)\n", lastExternalVOC);
+            lastRoomLog = millis();
         }
-    } else {
-        vocStableStartTime = millis();
-        lastVocSyncRef = smoothedIAQInternal;
     }
 
     // --- Adaptive Idle & Fan Logic ---
@@ -480,28 +472,7 @@ void loop() {
     }
     if (okPlenum) currentData.plenumStaticP = bmePlenum.pressure;
 
-    // Carbon Filter Health (Efficiency check with time-based window)
-    if (smoothedIAQInternal > 100.0) { 
-        float efficiency = 0;
-        if (smoothedIAQInternal > 0.1) { // Zero-Division Shield
-            efficiency = (smoothedIAQInternal - smoothedIAQPlenum) / smoothedIAQInternal;
-        }
-        
-        if (efficiency < 0.5) {
-            if (carbonAlertStartTime == 0) carbonAlertStartTime = millis();
-            if (millis() - carbonAlertStartTime > CARBON_ALERT_WINDOW_MS) {
-                currentData.carbonAlert = true;
-            }
-        } else {
-            carbonAlertStartTime = 0;
-            currentData.carbonAlert = false;
-        }
-    } else {
-        carbonAlertStartTime = 0;
-        currentData.carbonAlert = false;
-    }
-
-    // Pack Telemetry
+    // Pack Internal Environmental Telemetry (needed for fresh humidity in carbon check)
     if (okInternal) {
         float tRaw = bmeInternal.temperature;
         float tComp = tRaw + TEMP_OFFSET;
@@ -510,6 +481,55 @@ void loop() {
         currentData.internalVOC = smoothedIAQInternal;
         currentData.internalStaticP = bmeInternal.pressure;
     }
+
+    // Carbon Filter Health (Two-tier efficiency check with true pause gates)
+    // Level 1 Warning  (amber): efficiency < 70% for 15 min — check filter
+    // Level 2 Critical (red):   efficiency < 50% for 20 min — replace filter
+    // GATES: High humidity (>60%) or External Room Spike (>50 IAQ) freeze timers.
+    static uint32_t lastCarbonEvalTime = millis();
+    uint32_t loopDt = millis() - lastCarbonEvalTime;
+    lastCarbonEvalTime = millis();
+
+    bool isHighHumidity = (currentData.internalHum > HUMIDITY_GATE_MAX);
+    bool isCarbonPaused = isHighHumidity || isExternalRoomEvent;
+
+    if (isCarbonPaused) {
+        // TRUE FREEZE: Shift start times forward by loopDt so elapsed duration stays frozen in place
+        if (carbonAlertStartTime != 0) carbonAlertStartTime += loopDt;
+        if (carbonWarnStartTime != 0) carbonWarnStartTime += loopDt;
+    } else if (smoothedIAQInternal > CARBON_GATE_IAQ) {
+        float efficiency = (smoothedIAQInternal > 0.1)
+            ? (smoothedIAQInternal - smoothedIAQPlenum) / smoothedIAQInternal
+            : 0.0;
+
+        if (efficiency < CARBON_ALERT_THRESHOLD) {
+            // Critical zone (<50%): reset warn timer, evaluate 20m critical timer
+            carbonWarnStartTime = 0;
+            if (carbonAlertStartTime == 0) carbonAlertStartTime = millis();
+            if (millis() - carbonAlertStartTime > CARBON_ALERT_WINDOW_MS) {
+                currentData.carbonAlert = 2;
+            }
+        } else if (efficiency < CARBON_WARN_THRESHOLD) {
+            // Warning zone (50-70%): reset critical timer, evaluate 15m warn timer
+            carbonAlertStartTime = 0;
+            if (currentData.carbonAlert == 2) currentData.carbonAlert = 1;
+            if (carbonWarnStartTime == 0) carbonWarnStartTime = millis();
+            if (millis() - carbonWarnStartTime > CARBON_WARN_WINDOW_MS) {
+                currentData.carbonAlert = 1;
+            }
+        } else {
+            // Clean (>70%): clear timers and alert
+            carbonAlertStartTime = 0;
+            carbonWarnStartTime = 0;
+            currentData.carbonAlert = 0;
+        }
+    } else {
+        // IAQ below evaluation gate (<75): clear timers and alert
+        carbonAlertStartTime = 0;
+        carbonWarnStartTime = 0;
+        currentData.carbonAlert = 0;
+    }
+
     currentData.particulate = smoothedPM25;
     currentData.particulate10 = smoothedPM10;
     currentData.plenumVOC = smoothedIAQPlenum;

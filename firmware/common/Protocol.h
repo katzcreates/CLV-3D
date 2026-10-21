@@ -29,7 +29,7 @@ struct SensorData {
     // Control Status
     uint8_t fanSpeed;       // 0-100%
     bool filterAlert;       // G4 Filter replacement required
-    bool carbonAlert;       // Carbon saturation detected
+    uint8_t carbonAlert;    // Carbon efficiency: 0=OK, 1=Warning (<70%), 2=Critical (<50%)
     
     // Origin Node ID string or Type to filter received data
     uint8_t senderNode;     // 2: Node2, 3: Node3, 4: Node4

@@ -1,4 +1,4 @@
-#include <WiFi.h>
+﻿#include <WiFi.h>
 #include <esp_now.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -132,16 +132,17 @@ void loop() {
         // No immediate save here to prevent spam during initial climb. 
         // Periodic save handles this.
     }
-    // 2. Downward (Drift Correction): If air is stable (>10 IAQ) for 5 minutes.
-    else if (smoothedIAQ > 10.0) {
+    // 2. Safe Downward Drift: ONLY if room air is near-zero (5.0 to 25.0 IAQ) for 15m.
+    // Gated strictly below 25.0 to ensure cooking or cleaning fumes never corrupt the baseline.
+    else if (smoothedIAQ > 5.0 && smoothedIAQ < 25.0) {
         if (abs(smoothedIAQ - lastVocSyncRef) < 5.0) { // Tightened stability window
-            if (millis() - lastDriftCheckTime > 300000) { 
-                // Nudge baseline 10% closer to current resistance (Gentler)
-                gasBaseline = (gasBaseline * 0.90) + (currentGasRes * 0.10);
+            if (millis() - lastDriftCheckTime > 900000) { // 15 Minutes
+                // Nudge baseline 5% closer to current resistance (gentler to avoid overshoot)
+                gasBaseline = (gasBaseline * 0.95) + (currentGasRes * 0.05);
                 gasBaseline = constrain(gasBaseline, 10.0, 1500.0);
                 saveBaseline(); // Immediate Save
                 lastDriftCheckTime = millis();
-                Serial.println(">> VOC Drift Correction: Nudging Baseline Down.");
+                Serial.println(">> Safe VOC Drift: Nudging Baseline Down in Clean Room Air.");
             }
         } else {
             lastDriftCheckTime = millis();

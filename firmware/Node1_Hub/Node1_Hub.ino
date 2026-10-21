@@ -1,4 +1,4 @@
-#include <WiFi.h>
+﻿#include <WiFi.h>
 #include <esp_now.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
@@ -103,9 +103,12 @@ void drawHeader() {
     if (currentPage == 1) { headerCol = 0x3186; alertMsg = "SYSTEM STATUS"; }
     else if (currentPage == 2) { headerCol = 0x9300; alertMsg = "MANUAL FAN CONTROL"; }
 
-    if (node2Data.filterAlert && node2Data.carbonAlert) { headerCol = CLR_BAD; alertMsg = "!! CLOGGED FILTERS !!"; }
-    else if (node2Data.filterAlert) { headerCol = CLR_BAD; alertMsg = "!! REPLACE G4 FILTER !!"; }
-    else if (node2Data.carbonAlert) { headerCol = CLR_WARN; alertMsg = "!! REPLACE CARBON FILTER !!"; }
+    // Alert priority: G4+Carbon Critical > G4 > Carbon Critical > Carbon Warning > High Humidity (>60%)
+    if      (node2Data.filterAlert && node2Data.carbonAlert == 2) { headerCol = CLR_BAD;    alertMsg = "!! CLOGGED FILTERS !!"; }
+    else if (node2Data.filterAlert)                               { headerCol = CLR_BAD;    alertMsg = "!! REPLACE G4 FILTER !!"; }
+    else if (node2Data.carbonAlert == 2)                          { headerCol = CLR_BAD;    alertMsg = "!! REPLACE CARBON FILTER !!"; }
+    else if (node2Data.carbonAlert == 1)                          { headerCol = CLR_WARN;   alertMsg = "!! CHECK CARBON FILTER !!"; }
+    else if (node2Data.internalHum > 60.0)                        { headerCol = CLR_PURPLE; alertMsg = "!! HIGH HUMIDITY (>60%) - PAUSED !!"; }
     
     tft.fillRect(0, 0, 320, 35, headerCol);
     tft.setFont(&FreeSansBold9pt7b);
@@ -257,11 +260,18 @@ void updateDisplay() {
         updatePage2();
     }
     
-    static bool lastAlertState = false;
-    bool currentAlertState = (node2Data.filterAlert || node2Data.carbonAlert);
-    if (currentAlertState != lastAlertState) {
+    // Multi-state alert tracking: triggers redraw whenever any alert condition changes
+    static uint8_t lastAlertCode = 255;
+    uint8_t currentAlertCode = 0;
+    if      (node2Data.filterAlert && node2Data.carbonAlert == 2) currentAlertCode = 5;
+    else if (node2Data.filterAlert)                               currentAlertCode = 4;
+    else if (node2Data.carbonAlert == 2)                          currentAlertCode = 3;
+    else if (node2Data.carbonAlert == 1)                          currentAlertCode = 2;
+    else if (node2Data.internalHum > 60.0)                        currentAlertCode = 1;
+
+    if (currentAlertCode != lastAlertCode) {
         if (currentPage == 0) drawPage0Static(); else drawPage1Static();
-        lastAlertState = currentAlertState;
+        lastAlertCode = currentAlertCode;
     }
 }
 

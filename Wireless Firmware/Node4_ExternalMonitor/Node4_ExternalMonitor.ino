@@ -1,4 +1,4 @@
-#include <WiFi.h>
+﻿#include <WiFi.h>
 #include <esp_now.h>
 #include <ArduinoOTA.h>
 #include <Wire.h>
@@ -167,14 +167,16 @@ void loop() {
         gasBaseline = (currentGasRes * gasBaselineWeight) + (gasBaseline * (1.0 - gasBaselineWeight));
         gasBaseline = constrain(gasBaseline, 10.0, 1500.0);
     }
-    else if (smoothedIAQ > 10.0) {
+    // 2. Safe Downward Drift: ONLY if room air is near-zero (5.0 to 25.0 IAQ) for 15m.
+    // Gated strictly below 25.0 to ensure cooking or cleaning fumes never corrupt the baseline.
+    else if (smoothedIAQ > 5.0 && smoothedIAQ < 25.0) {
         if (abs(smoothedIAQ - lastVocSyncRef) < 5.0) {
-            if (millis() - lastDriftCheckTime > 300000) { 
-                gasBaseline = (gasBaseline * 0.90) + (currentGasRes * 0.10);
+            if (millis() - lastDriftCheckTime > 900000) { // 15 Minutes
+                gasBaseline = (gasBaseline * 0.95) + (currentGasRes * 0.05);
                 gasBaseline = constrain(gasBaseline, 10.0, 1500.0);
                 saveBaseline();
                 lastDriftCheckTime = millis();
-                Serial.println(">> VOC Drift Correction: Nudging Baseline Down.");
+                Serial.println(">> Safe VOC Drift: Nudging Baseline Down in Clean Room Air.");
             }
         } else {
             lastDriftCheckTime = millis();
