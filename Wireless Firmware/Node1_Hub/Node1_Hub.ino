@@ -281,8 +281,13 @@ void updateDisplay() {
     }
 }
 
+String safeFloat(float val, int decimals) {
+    if (isnan(val) || isinf(val)) return "0.0";
+    return String(val, decimals);
+}
+
 // ============================================================
-//  InfluxDB Cloud Push â€” Sends all sensor data as line protocol
+//  InfluxDB Cloud Push — Sends all sensor data as line protocol
 //  Gracefully skips if WiFi is down or INFLUX_URL is empty.
 // ============================================================
 void pushToCloud() {
@@ -301,27 +306,27 @@ void pushToCloud() {
     http.setTimeout(2000); // 2s timeout to avoid blocking the UI
 
     // Build InfluxDB line protocol payload
-    // Format: measurement field1=val1,field2=val2
     String payload = "cabinet ";
-    payload += "int_temp=" + String(node2Data.internalTemp, 1);
-    payload += ",int_hum=" + String(node2Data.internalHum, 1);
-    payload += ",int_voc=" + String(node2Data.internalVOC, 0);
-    payload += ",int_pressure=" + String(node2Data.internalStaticP, 1);
-    payload += ",pm25=" + String(node2Data.particulate, 1);
-    payload += ",pm10=" + String(node2Data.particulate10, 1);
-    payload += ",plenum_voc=" + String(node2Data.plenumVOC, 0);
-    payload += ",plenum_pressure=" + String(node2Data.plenumStaticP, 1);
-    payload += ",filter_pressure=" + String(node2Data.filterStaticP, 1);
-    payload += ",ext_temp=" + String(node4Data.externalTemp, 1);
-    payload += ",ext_hum=" + String(node4Data.externalHum, 1);
-    payload += ",ext_voc=" + String(node4Data.externalVOC, 0);
-    payload += ",ext_pm25=" + String(node4Data.externalParticulate, 1);
-    payload += ",ext_pm10=" + String(node4Data.externalParticulate10, 1);
+    payload += "int_temp=" + safeFloat(node2Data.internalTemp, 1);
+    payload += ",int_hum=" + safeFloat(node2Data.internalHum, 1);
+    payload += ",int_voc=" + String((int)node2Data.internalVOC);
+    payload += ",int_pressure=" + safeFloat(node2Data.internalStaticP, 1);
+    payload += ",pm25=" + safeFloat(node2Data.particulate, 1);
+    payload += ",pm10=" + safeFloat(node2Data.particulate10, 1);
+    payload += ",plenum_voc=" + String((int)node2Data.plenumVOC);
+    payload += ",plenum_pressure=" + safeFloat(node2Data.plenumStaticP, 1);
+    payload += ",filter_pressure=" + safeFloat(node2Data.filterStaticP, 1);
+    payload += ",ext_temp=" + safeFloat(node4Data.externalTemp, 1);
+    payload += ",ext_hum=" + safeFloat(node4Data.externalHum, 1);
+    payload += ",ext_voc=" + String((int)node4Data.externalVOC);
+    payload += ",ext_pm25=" + safeFloat(node4Data.externalParticulate, 1);
+    payload += ",ext_pm10=" + safeFloat(node4Data.externalParticulate10, 1);
     payload += ",fan_speed=" + String(node2Data.fanSpeed);
     payload += ",filter_alert=" + String(node2Data.filterAlert ? "true" : "false");
-    payload += ",carbon_alert=" + String(node2Data.carbonAlert); // 0=OK, 1=Warning, 2=Critical
+    payload += ",carbon_alert=" + String(node2Data.carbonAlert); 
+    
     float eff = (node2Data.internalVOC > 0.1) ? ((node2Data.internalVOC - node2Data.plenumVOC) / node2Data.internalVOC) : 0.0;
-    payload += ",carbon_eff=" + String(constrain(eff, 0.0, 1.0), 2);
+    payload += ",carbon_eff=" + safeFloat(constrain(eff, 0.0, 1.0), 2);
 
     int httpCode = http.POST(payload);
     
@@ -334,6 +339,7 @@ void pushToCloud() {
         }
     } else {
         Serial.printf(">> Cloud: Push failed (HTTP %d)\n", httpCode);
+        Serial.println(">> Error Reason: " + http.getString());
     }
     
     http.end();
@@ -434,6 +440,17 @@ void loop() {
     if (!isSleeping && (millis() - lastDisplayUpdate > displayInterval)) {
         updateDisplay();
         lastDisplayUpdate = millis();
+    }
+
+    // --- Wi-Fi Auto-Recovery ---
+    if (WiFi.status() != WL_CONNECTED) {
+        static uint32_t lastReconnectAttempt = 0;
+        if (millis() - lastReconnectAttempt > 10000) {
+            Serial.println(">> Wi-Fi Lost. Attempting reconnect...");
+            WiFi.disconnect();
+            WiFi.reconnect();
+            lastReconnectAttempt = millis();
+        }
     }
 
     // --- Cloud: Push sensor data to InfluxDB ---
