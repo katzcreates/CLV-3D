@@ -9,6 +9,9 @@
 #include "../common/Protocol.h"
 #include "../common/WirelessConfig.h"
 
+// Set to -1 when disconnected, or your actual pin (e.g., A0) when wired
+#define PM_SET_PIN -1
+
 // Forward Declaration for Compiler
 void saveBaselines();
 
@@ -200,11 +203,16 @@ void setup() {
     gasBaselinePlenum = preferences.getFloat("basePlen", 50.0);
     preferences.end();
     
-    // Sanity check
     if (gasBaselineInternal < 1.0) gasBaselineInternal = 50.0;
     if (gasBaselinePlenum < 1.0) gasBaselinePlenum = 50.0;
     
-    lastBaselineSaveTime = millis();
+lastBaselineSaveTime = millis();
+
+    //Check PM SET Pin Connection
+    if (PM_SET_PIN >= 0) {
+    pinMode(PM_SET_PIN, OUTPUT);
+    digitalWrite(PM_SET_PIN, HIGH); // Sensor on by default
+    }
 
     Serial.println("\n--- Sensor Stack Setup Complete (Wireless OTA). Loop Starting ---");
 }
@@ -218,22 +226,32 @@ void loop() {
     
     // --- Smart PM Power Management ---
     uint32_t idleTime = millis() - lastActivityTime;
-    bool shouldBeActive = !isSystemIdle || isManualMode;
-    
-    if (shouldBeActive) {
-        pmIsSleeping = false; // Sensor stays on physically (I2C limitation)
-    } else if (idleTime < 86400000) { // < 24 Hours: Duty Cycle
+    if (!isSystemIdle) {
+        if (pmIsSleeping) { 
+            if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, HIGH); 
+            pmIsSleeping = false; 
+        }
+    } else if (idleTime < 86400000) {
         uint32_t timeSinceSample = millis() - lastPmSampleTime;
         if (timeSinceSample > PM_SAMPLE_INTERVAL) {
-            pmIsSleeping = false; 
+            if (pmIsSleeping) { 
+                if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, HIGH); 
+                pmIsSleeping = false; 
+            }
             if (timeSinceSample > (PM_SAMPLE_INTERVAL + PM_WAKE_WINDOW)) {
                 lastPmSampleTime = millis();
             }
         } else {
+            if (!pmIsSleeping) { 
+                if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, LOW); 
+                pmIsSleeping = true; 
+            }
+        }
+    } else {
+        if (!pmIsSleeping) { 
+            if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, LOW); 
             pmIsSleeping = true; 
         }
-    } else { // > 24 Hours: Deep Sleep
-        pmIsSleeping = true; 
     }
 
     PM25_AQI_Data pmData;

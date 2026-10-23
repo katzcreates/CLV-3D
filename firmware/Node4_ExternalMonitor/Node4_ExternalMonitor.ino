@@ -7,6 +7,9 @@
 #include <Preferences.h>
 #include "../common/Protocol.h"
 
+// Set to -1 when disconnected, or your actual pin (e.g., A0) when wired
+#define PM_SET_PIN -1
+
 // Forward Declaration for Compiler
 void saveBaseline();
 
@@ -111,11 +114,60 @@ void setup() {
     if (gasBaseline < 1.0) gasBaseline = 50.0;
     lastBaselineSaveTime = millis();
 
+    //Check PM SET Pin Connection
+    if (PM_SET_PIN >= 0) {
+    pinMode(PM_SET_PIN, OUTPUT);
+    digitalWrite(PM_SET_PIN, HIGH); // Sensor on by default
+    }
+
     Serial.println("\n--- External Monitor Setup Complete. 24/7 Mode ---");
 }
 
 void loop() {
     bool bmeOk = bmeExt.performReading();
+
+    // --- Activity Tracking ---
+    float currentIAQ = smoothedIAQ;
+    if (currentIAQ > 50.0 || smoothedPM25 > 10.0) {
+        lastActivityTime = millis();
+        if (isSystemIdle) {
+            Serial.println(">> Room Activity Detected: Waking PM Sensor.");
+            isSystemIdle = false;
+        }
+    } else if (!isSystemIdle && (millis() - lastActivityTime > IDLE_STABILITY_MS)) {
+        Serial.println(">> Room Quiet for 30m: Entering PM Duty-Cycle.");
+        isSystemIdle = true;
+    }
+
+    // --- Smart PM Power Management ---
+    uint32_t idleTime = millis() - lastActivityTime;
+    if (!isSystemIdle) {
+        if (pmIsSleeping) { 
+            if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, HIGH); 
+            pmIsSleeping = false; 
+        }
+    } else if (idleTime < 86400000) {
+        uint32_t timeSinceSample = millis() - lastPmSampleTime;
+        if (timeSinceSample > PM_SAMPLE_INTERVAL) {
+            if (pmIsSleeping) { 
+                if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, HIGH); 
+                pmIsSleeping = false; 
+            }
+            if (timeSinceSample > (PM_SAMPLE_INTERVAL + PM_WAKE_WINDOW)) {
+                lastPmSampleTime = millis();
+            }
+        } else {
+            if (!pmIsSleeping) { 
+                if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, LOW); 
+                pmIsSleeping = true; 
+            }
+        }
+    } else {
+        if (!pmIsSleeping) { 
+            if (PM_SET_PIN >= 0) digitalWrite(PM_SET_PIN, LOW); 
+            pmIsSleeping = true; 
+        }
+    }
     
     PM25_AQI_Data pmData;
     bool pmSuccess = pm25.read(&pmData);
