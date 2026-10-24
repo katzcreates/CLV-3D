@@ -320,14 +320,12 @@ void loop() {
         // UI Smoothing
         smoothedIAQPlenum = (iaqPlenum * uiSmoothingFactor) + (smoothedIAQPlenum * (1.0 - uiSmoothingFactor));
         
-        // Plenum Drift Check: Under active airflow, air after filter cannot be dirtier than air before it.
-        if (smoothedFanSpeed > 10.0 && smoothedIAQInternal < 50.0) {
-            if (smoothedIAQPlenum > (smoothedIAQInternal + 5.0)) {
-                // Plenum baseline is reading artificially high/dirty; nudge gently down
-                float rPlen = bmePlenum.gas_resistance / 1000.0;
-                gasBaselinePlenum = (rPlen * 0.05) + (gasBaselinePlenum * 0.95);
-                gasBaselinePlenum = constrain(gasBaselinePlenum, 10.0, 1500.0);
-            }
+        // Plenum Drift Check: Air after the filter cannot be significantly dirtier than air before it.
+        if (smoothedIAQInternal < 50.0 && smoothedIAQPlenum > (smoothedIAQInternal + 5.0)) {
+            // Nudge plenum baseline down to close the phantom gap
+            float rPlen = bmePlenum.gas_resistance / 1000.0;
+            gasBaselinePlenum = (rPlen * 0.10) + (gasBaselinePlenum * 0.90);
+            gasBaselinePlenum = constrain(gasBaselinePlenum, 10.0, 1500.0);
         }
         // Display clamp: During active airflow, clamp plenum for UI consistency
         if (smoothedFanSpeed > 10.0 && smoothedIAQPlenum > smoothedIAQInternal) {
