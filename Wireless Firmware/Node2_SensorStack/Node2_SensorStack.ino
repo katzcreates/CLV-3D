@@ -54,7 +54,6 @@ Adafruit_PM25AQI pm25;
 // Temperature Compensation
 #define TEMP_OFFSET -13.0 // Reduced from -15.0 based on fan cooling data
 
-// Peer Data
 // Peer Data (Directed to Hub)
 uint8_t hubAddress[] = {0x84, 0xF7, 0x03, 0x73, 0xB3, 0x7E}; // Node 1 (Hub) MAC
 SensorData currentData;
@@ -83,8 +82,8 @@ float smoothedPM10 = 0;
 const float uiSmoothingFactor = 0.5; // 0.5 is a good balance for numbers
 
 // Configuration Offsets
-const float G4_FILTER_TARE_OFFSET = -40.0; 
-const float G4_ALERT_THRESHOLD = 5.0;      
+const float G4_ALERT_THRESHOLD = 5.0; 
+float g4RunHours = 0.0;     
 
 // Adaptive Idle State Tracking
 uint32_t lastActivityTime = 0;
@@ -105,6 +104,8 @@ uint32_t lastPmSampleTime = 0;
 const uint32_t PM_SAMPLE_INTERVAL = 600000; // 10 Minutes (Duty-Cycle)
 const uint32_t PM_WAKE_WINDOW = 30000;      // 30s sampling window
 
+float lastExternalPM25 = 0.0;
+
 void onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int len) {
     if (len == sizeof(SensorData)) {
         SensorData *receivedData = (SensorData *)incomingData;
@@ -112,6 +113,7 @@ void onDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int 
             lastFilterPressure = receivedData->filterStaticP;
         } else if (receivedData->senderNode == 4) {
             lastExternalVOC = receivedData->externalVOC;
+            lastExternalPM25 = receivedData->externalParticulate;
         }
     } else if (len == sizeof(ControlCommand)) {
         ControlCommand *cmd = (ControlCommand *)incomingData;
@@ -202,6 +204,10 @@ void setup() {
     gasBaselineInternal = preferences.getFloat("baseInt", 50.0);
     gasBaselinePlenum = preferences.getFloat("basePlen", 50.0);
     preferences.end();
+
+    preferences.begin("g4-health", true);
+    g4RunHours = preferences.getFloat("g4Hours", 0.0);
+    preferences.end();
     
     if (gasBaselineInternal < 1.0) gasBaselineInternal = 50.0;
     if (gasBaselinePlenum < 1.0) gasBaselinePlenum = 50.0;
@@ -220,6 +226,9 @@ lastBaselineSaveTime = millis();
 void loop() {
     // --- OTA: Check for incoming wireless updates ---
     ArduinoOTA.handle();
+
+    static uint32_t lastSensorRead = 0;
+    if (millis() - lastSensorRead > 2000) {
 
     bool okInternal = bmeInternal.performReading();
     bool okPlenum = bmePlenum.performReading();
@@ -269,36 +278,29 @@ void loop() {
         
         // --- Self-Healing Baseline Logic ---
         // 1. Upward (Shared Peak-Seeking): If Internal sees cleaner air, we update both.
-        // This prevents the Plenum from 'normalizing' filtered air as its only zero.
         if (rInt > gasBaselineInternal) {
             gasBaselineInternal = (rInt * gasBaselineWeight) + (gasBaselineInternal * (1.0-gasBaselineWeight));
-            gasBaselineInternal = constrain(gasBaselineInternal, 10.0, 1500.0); // Reality Cap
+            gasBaselineInternal = constrain(gasBaselineInternal, 10.0, 1000.0);
             
             if (okPlenum) {
                 float rPlen = bmePlenum.gas_resistance / 1000.0;
-                // Nudge Plenum upward to stay 'tethered' to the Internal reality.
                 if (rPlen > gasBaselinePlenum) {
                     gasBaselinePlenum = (rPlen * gasBaselineWeight) + (gasBaselinePlenum * (1.0-gasBaselineWeight));
-                    gasBaselinePlenum = constrain(gasBaselinePlenum, 10.0, 1500.0);
+                    gasBaselinePlenum = constrain(gasBaselinePlenum, 10.0, 1000.0);
                 }
             }
         } 
-        // 2. Safe Downward Drift: ONLY if air is near-zero (5.0 to 25.0 IAQ) for 15m.
-        // Gated strictly below SAFE_DRIFT_IAQ_CEILING to prevent adopting resin/IPA fumes as baseline.
-        else if (smoothedIAQInternal > 5.0 && smoothedIAQInternal < SAFE_DRIFT_IAQ_CEILING) {
-            if (abs(smoothedIAQInternal - lastDriftRef) < 5.0) { // Stable near-clean air
-                if (millis() - lastDriftCheckTime > DRIFT_WINDOW_MS) {
-                    // Nudge baseline 5% closer to current resistance (gentler to avoid overshoot)
-                    gasBaselineInternal = (gasBaselineInternal * 0.95) + (rInt * 0.05);
-                    gasBaselineInternal = constrain(gasBaselineInternal, 10.0, 1500.0);
-                    lastDriftCheckTime = millis();
-                    saveBaselines(); // Immediate Save
-                    Serial.println(">> Safe VOC Drift: Nudging Baseline Down in Clean Air.");
-                }
-            } else {
-                lastDriftCheckTime = millis();
-                lastDriftRef = smoothedIAQInternal;
+        
+        // 2. Continuous Baseline Decay
+        static uint32_t lastDecayTime = millis();
+        if (millis() - lastDecayTime > 21600000) { // 6 Hours
+            gasBaselineInternal = constrain(gasBaselineInternal * 0.98, 10.0, 1000.0);
+            if (okPlenum) {
+                gasBaselinePlenum = constrain(gasBaselinePlenum * 0.98, 10.0, 1000.0);
             }
+            lastDecayTime = millis();
+            saveBaselines();
+            Serial.println(">> Baseline Decay: Relaxing zero-point by 2%.");
         }
 
         if (millis() - lastLogTime > 5000) {
@@ -346,8 +348,7 @@ void loop() {
     }
 
     // --- Node 4 External Event Shield ---
-    // If the room monitor sees contaminated air (>50 IAQ), external event (cooking/cleaning) is active.
-    bool isExternalRoomEvent = (lastExternalVOC > ROOM_EVENT_IAQ_GATE);
+    bool isExternalRoomEvent = (lastExternalVOC > ROOM_EVENT_IAQ_GATE) || (lastExternalPM25 > 35.0);
     if (isExternalRoomEvent) {
         static uint32_t lastRoomLog = 0;
         if (millis() - lastRoomLog > 60000) {
@@ -463,30 +464,32 @@ void loop() {
         lastBaselineSaveTime = millis();
     }
 
-    // G4 Filter Health (Pressure Differential with Software Tare)
-    float pInt = bmeInternal.pressure;
-    float pFil = lastFilterPressure;
-    float g4Drop = (pInt - pFil) - G4_FILTER_TARE_OFFSET;
+// --- G4 Filter Health (Particulate-Weighted Run-Hours) ---
+    static uint32_t lastRunHourUpdate = millis();
+    
+    if (smoothedFanSpeed > 15.0) {
+        float hoursPassed = (millis() - lastRunHourUpdate) / 3600000.0;
+        float wearMultiplier = 0.05; 
+        
+        if (smoothedPM10 > 300.0) wearMultiplier = 10.0;
+        else if (smoothedPM10 > 150.0) wearMultiplier = 5.0;  
+        else if (smoothedPM10 > 50.0) wearMultiplier = 2.0;
+        else if (smoothedPM10 > 20.0) wearMultiplier = 1.0;
+        
+        g4RunHours += (hoursPassed * wearMultiplier);
+    }
+    lastRunHourUpdate = millis();
 
-    if (okInternal) {
-        // Only evaluate pressure drop if the fan is actually pulling significant air
-        if (smoothedFanSpeed > 30.0 && g4Drop > G4_ALERT_THRESHOLD) {
-            if (filterAlertStartTime == 0) filterAlertStartTime = millis();
-            uint32_t elapsed = millis() - filterAlertStartTime;
-            
-            if (elapsed > FILTER_ALERT_WINDOW_MS) {
-                currentData.filterAlert = true;
-                Serial.printf("!! G4 FILTER ALERT ACTIVE (Drop: %.1f) !!\n", g4Drop);
-            } else {
-                Serial.printf("G4 PENDING: %.0fs (Drop: %.1f)\n", (float)(FILTER_ALERT_WINDOW_MS - elapsed)/1000.0, g4Drop);
-            }
-        } else {
-            filterAlertStartTime = 0;
-            currentData.filterAlert = false;
-        }
-    } else {
-        // SENSOR GLITCH: We do NOT reset the timer here. We just skip this loop's update.
-        // This makes the alert 'sticky' even if the I2C bus is noisy.
+    // Trigger alert at 500 equivalent hours
+    currentData.filterAlert = (g4RunHours > 500.0);
+
+    // Save run-hours to NVS every hour
+    static uint32_t lastRunHourSave = millis();
+    if (millis() - lastRunHourSave > 3600000) { 
+        preferences.begin("g4-health", false);
+        preferences.putFloat("g4Hours", g4RunHours);
+        preferences.end();
+        lastRunHourSave = millis();
     }
     if (okPlenum) currentData.plenumStaticP = bmePlenum.pressure;
 
@@ -555,7 +558,8 @@ void loop() {
     currentData.fanSpeed = (uint8_t)round(smoothedFanSpeed); // FIX: Pack actual dynamic speed for the Hub's local sync
     // Send telemetry directly to Hub
     esp_now_send(hubAddress, (uint8_t *) &currentData, sizeof(currentData));
-    delay(2000); 
+    lastSensorRead = millis();
+    }
 }
 
 void saveBaselines() {

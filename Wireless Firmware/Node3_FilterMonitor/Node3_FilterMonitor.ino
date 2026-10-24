@@ -50,6 +50,9 @@ void loop() {
     // --- OTA: Check for incoming wireless updates ---
     ArduinoOTA.handle();
 
+    static uint32_t lastSensorRead = 0;
+    if (millis() - lastSensorRead > 2000) {
+
     if (!bmeFilter.performReading()) return;
 
     outData.filterStaticP = bmeFilter.pressure;
@@ -58,5 +61,6 @@ void loop() {
 
     esp_now_send(NULL, (uint8_t *) &outData, sizeof(outData));
 
-    delay(2000);
+    lastSensorRead = millis();
+    }
 }

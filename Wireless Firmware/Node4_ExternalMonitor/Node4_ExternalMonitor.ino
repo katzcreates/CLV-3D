@@ -130,6 +130,9 @@ void loop() {
     // --- OTA: Check for incoming wireless updates ---
     ArduinoOTA.handle();
 
+    static uint32_t lastSensorRead = 0;
+    if (millis() - lastSensorRead > 2000) {
+
     bool bmeOk = bmeExt.performReading();
     
     // --- Activity Tracking ---
@@ -184,25 +187,19 @@ void loop() {
     float iaqCalculated = map(constrain(currentGasRes, gasBaseline * 0.1, gasBaseline), gasBaseline, gasBaseline * 0.1, 0, 500);
 
     // --- Self-Healing Baseline Logic ---
+    // 1. Upward Peak-Seeking
     if (currentGasRes > gasBaseline) {
         gasBaseline = (currentGasRes * gasBaselineWeight) + (gasBaseline * (1.0 - gasBaselineWeight));
-        gasBaseline = constrain(gasBaseline, 10.0, 1500.0);
+        gasBaseline = constrain(gasBaseline, 10.0, 1000.0);
     }
-    // 2. Safe Downward Drift: ONLY if room air is near-zero (5.0 to 25.0 IAQ) for 15m.
-    // Gated strictly below 25.0 to ensure cooking or cleaning fumes never corrupt the baseline.
-    else if (smoothedIAQ > 5.0 && smoothedIAQ < 25.0) {
-        if (abs(smoothedIAQ - lastVocSyncRef) < 5.0) {
-            if (millis() - lastDriftCheckTime > 900000) { // 15 Minutes
-                gasBaseline = (gasBaseline * 0.95) + (currentGasRes * 0.05);
-                gasBaseline = constrain(gasBaseline, 10.0, 1500.0);
-                saveBaseline();
-                lastDriftCheckTime = millis();
-                Serial.println(">> Safe VOC Drift: Nudging Baseline Down in Clean Room Air.");
-            }
-        } else {
-            lastDriftCheckTime = millis();
-            lastVocSyncRef = smoothedIAQ;
-        }
+    
+    // 2. Continuous Baseline Decay
+    static uint32_t lastDecayTime = millis();
+    if (millis() - lastDecayTime > 21600000) { // 6 Hours
+        gasBaseline = constrain(gasBaseline * 0.98, 10.0, 1000.0);
+        lastDecayTime = millis();
+        saveBaseline();
+        Serial.println(">> Baseline Decay: Relaxing External zero-point by 2%.");
     }
 
     // Filter Smoothing
@@ -252,7 +249,8 @@ void loop() {
         lastBaselineSaveTime = millis();
     }
 
-    delay(2000);
+    lastSensorRead = millis();
+    }
 }
 
 void saveBaseline() {
