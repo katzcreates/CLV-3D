@@ -22,8 +22,8 @@ void saveBaselines();
 #define MIN_FAN_SPEED 10
 #define MAX_FAN_SPEED 80
 #define PEAK_FAN_SPEED 100
-#define CARBON_WARN_WINDOW_MS  900000    // 15 Minutes for Level 1 Warning (<70% eff)
-#define CARBON_ALERT_WINDOW_MS 1200000   // 20 Minutes for Level 2 Critical (<50% eff)
+#define CARBON_WARN_WINDOW_MS  1800000    // 30 Minutes for Level 1 Warning (<70% eff)
+#define CARBON_ALERT_WINDOW_MS 3600000   // 60 Minutes for Level 2 Critical (<50% eff)
 #define FILTER_ALERT_WINDOW_MS 30000 
 #define CARBON_GATE_IAQ        75.0      // Minimum IAQ before efficiency is checked
 #define CARBON_WARN_THRESHOLD  0.70      // Level 1 Warning: filter removing <70% of VOCs
